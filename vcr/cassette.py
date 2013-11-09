@@ -36,6 +36,7 @@ class Cassette(object):
         self.data = []
         self.play_counts = Counter()
         self.dirty = False
+	self.rewound = False
         self.record_mode = record_mode
 
     @property
@@ -49,15 +50,6 @@ class Cassette(object):
     @property
     def responses(self):
         return [response for (request, response) in self.data]
-
-    @property
-    def rewound(self):
-        """
-        If the cassette has already been recorded in another session, and has
-        been loaded again fresh from disk, it has been "rewound".  This means
-        that it should be write-only, depending on the record mode specified
-        """
-        return not self.dirty and self.play_count
 
     @property
     def write_protected(self):
@@ -113,6 +105,7 @@ class Cassette(object):
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
+	    self.rewound = True
         except IOError:
             pass
 
