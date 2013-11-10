@@ -36,7 +36,7 @@ class Cassette(object):
         self.data = []
         self.play_counts = Counter()
         self.dirty = False
-	self.rewound = False
+        self.rewound = False
         self.record_mode = record_mode
 
     @property
@@ -62,9 +62,20 @@ class Cassette(object):
         '''
         self.play_counts[request] += 1
 
+    def _find_matching_request_index(self, request):
+        i = 0
+        for stored_request, _ in self.data:
+            if requests_match(request, stored_request, self._match_on):
+                return i
+            i += 1
+
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
-        self.data.append((request, response))
+        index = self._find_matching_request_index(request)
+        if index is not None:
+            self.data[index][1].append(response)
+        else:
+            self.data.append((request, [response]))
         self.dirty = True
 
     def response_of(self, request):
@@ -72,13 +83,15 @@ class Cassette(object):
         Find the response corresponding to a request
 
         '''
-        responses = []
-        for stored_request, response in self.data:
+	found_responses = []
+        for stored_request, responses in self.data:
             if requests_match(request, stored_request, self._match_on):
-                responses.append(response)
+                found_responses = responses[0]
+                break
+
         index = self.play_counts[request]
         try:
-            return responses[index]
+            return found_responses[index]
         except IndexError:
             # I decided that a KeyError is the best exception to raise
             # if the cassette doesn't contain the request asked for.
@@ -105,7 +118,7 @@ class Cassette(object):
             for request, response in zip(requests, responses):
                 self.append(request, response)
             self.dirty = False
-	    self.rewound = True
+            self.rewound = True
         except IOError:
             pass
 
@@ -120,7 +133,7 @@ class Cassette(object):
 
     def __contains__(self, request):
         '''Return whether or not a request has been stored'''
-        for stored_request, response in self.data:
+        for stored_request, _ in self.data:
             if requests_match(stored_request, request, self._match_on):
                 return True
         return False
