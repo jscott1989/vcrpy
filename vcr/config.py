@@ -41,10 +41,10 @@ class VCR(object):
     def _get_matchers(self, matcher_names):
         try:
             matchers = [self.matchers[m] for m in matcher_names]
-        except KeyError as err:
+        except KeyError:
             raise KeyError(
                 "Matcher {0} doesn't exist or isn't registered".format(
-                    err)
+                    m)
             )
         return matchers
 
