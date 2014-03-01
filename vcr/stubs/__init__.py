@@ -1,6 +1,7 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-HAS_PY3 = False
+import six
+
 try:
     from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
     from cStringIO import StringIO
@@ -8,7 +9,6 @@ except ImportError:
     import http.client
     from http.client import HTTPConnection, HTTPSConnection, HTTPMessage
     from io import StringIO
-    HAS_PY3 = True
 from io import BytesIO
 
 from vcr.request import Request
@@ -30,7 +30,7 @@ def parse_headers_backwards_compat(header_dict):
 
 
 def parse_headers(header_list):
-    if HAS_PY3:
+    if six.PY3:
         try:
             return http.client.parse_headers(
                 BytesIO(
@@ -53,21 +53,21 @@ def parse_headers(header_list):
 
 
 def get_header(message, name):
-    if HAS_PY3:
+    if six.PY3:
         return message.getallmatchingheaders(name)
     else:
         return message.getheader(name)
 
 
 def get_header_items(message):
-    if HAS_PY3:
+    if six.PY3:
         return dict(message._headers).items()
     else:
         return message.dict.items()
 
 
 def get_headers(response):
-    if HAS_PY3:
+    if six.PY3:
         return response.msg._headers
     else:
         return response.msg.headers
@@ -284,7 +284,7 @@ class VCRHTTPConnection(VCRConnectionMixin, HTTPConnection):
     _protocol = 'http'
 
 
-if HAS_PY3:
+if six.PY3:
     class _InitOverride(object):
         """
          A sentinel to avoid circular super()
@@ -321,7 +321,7 @@ class VCRHTTPSConnection(VCRConnectionMixin, HTTPSConnection):
         '''I overrode the init and copied a lot of the code from the parent
         class because HTTPConnection when this happens has been replaced by
         VCRHTTPConnection,  but doing it here lets us use the original one.'''
-        if HAS_PY3:
+        if six.PY3:
             # Due to HTTPSConnection calling super(HTTPSConnection,
             # self).__init__, where we have replaced HTTPSConnection
             # with this class, we get a cyclic recursion unless we
