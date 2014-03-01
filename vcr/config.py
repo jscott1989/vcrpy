@@ -39,8 +39,10 @@ class VCR(object):
         return serializer
 
     def _get_matchers(self, matcher_names):
+        matchers = []
         try:
-            matchers = [self.matchers[m] for m in matcher_names]
+            for m in matcher_names:
+                matchers.append(self.matchers[m])
         except KeyError:
             raise KeyError(
                 "Matcher {0} doesn't exist or isn't registered".format(
