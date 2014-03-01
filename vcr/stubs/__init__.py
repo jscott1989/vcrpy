@@ -1,16 +1,12 @@
 '''Stubs for patching HTTP and HTTPS requests'''
 
-import six
-
 try:
-    from httplib import HTTPConnection, HTTPSConnection, HTTPMessage
-    from cStringIO import StringIO
-except ImportError:
     import http.client
-    from http.client import HTTPConnection, HTTPSConnection, HTTPMessage
-    from io import StringIO
-from io import BytesIO
-
+except ImportError:
+    pass
+import six
+from six.moves.http_client import HTTPConnection, HTTPSConnection, HTTPMessage
+from six import BytesIO
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
 
@@ -22,7 +18,7 @@ def parse_headers_backwards_compat(header_dict):
     parses the old dictionary-style headers for
     backwards-compatability reasons.
     """
-    msg = HTTPMessage(StringIO(""))
+    msg = HTTPMessage(BytesIO(""))
     for key, val in header_dict.items():
         msg.addheader(key, val)
         msg.headers.append("{0}:{1}".format(key, val))
@@ -46,7 +42,7 @@ def parse_headers(header_list):
     if isinstance(header_list, dict):
         return parse_headers_backwards_compat(header_list)
     headers = "".join(header_list) + "\r\n"
-    msg = HTTPMessage(StringIO(headers))
+    msg = HTTPMessage(BytesIO(headers))
     msg.fp.seek(0)
     msg.readheaders()
     return msg
