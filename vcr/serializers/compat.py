@@ -1,5 +1,29 @@
 import six
 
+def convert_to_bytes(resp):
+    resp = convert_headers_to_bytes(resp)
+    resp = convert_body_to_bytes(resp)
+    return resp
+
+def convert_to_unicode(resp):
+    resp = convert_headers_to_unicode(resp)
+    resp = convert_body_to_unicode(resp)
+    return resp
+
+def convert_headers_to_bytes(resp):
+    try:
+        resp['headers'] = [h.encode('utf-8') for h in resp['headers']]
+    except (KeyError, TypeError):
+        pass
+    return resp
+
+def convert_headers_to_unicode(resp):
+    try:
+        resp['headers'] = [h.decode('utf-8') for h in resp['headers']]
+    except (KeyError, TypeError):
+        pass
+    return resp
+
 def convert_body_to_bytes(resp):
     """
     If the request body is a string, encode it to bytes (for python3 support)
@@ -14,9 +38,29 @@ def convert_body_to_bytes(resp):
     try:
         if not isinstance(resp['body']['string'], six.binary_type):
             resp['body']['string'] = resp['body']['string'].encode('utf-8')
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, UnicodeEncodeError):
         # The thing we were converting either wasn't a dictionary or didn't have
 	# the keys we were expecting.  Some of the tests just serialize and
 	# deserialize a string.
+
+	# Also, sometimes the thing actually is binary, so if you can't encode
+	# it, just give up.
+        pass
+    return resp
+
+def convert_body_to_unicode(resp):
+    """
+    If the request body is bytes, decode it to a string (for python3 support)
+    """
+    try:
+        if not isinstance(resp['body']['string'], six.text_type):
+            resp['body']['string'] = resp['body']['string'].decode('utf-8')
+    except (KeyError, TypeError, UnicodeDecodeError):
+        # The thing we were converting either wasn't a dictionary or didn't have
+	# the keys we were expecting.  Some of the tests just serialize and
+	# deserialize a string.
+
+	# Also, sometimes the thing actually is binary, so if you can't decode
+	# it, just give up.
         pass
     return resp

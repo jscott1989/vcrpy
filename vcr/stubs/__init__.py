@@ -5,10 +5,11 @@ try:
 except ImportError:
     pass
 import six
-from six.moves.http_client import HTTPConnection, HTTPSConnection, HTTPMessage
+from six.moves.http_client import HTTPConnection, HTTPSConnection
 from six import BytesIO
 from vcr.request import Request
 from vcr.errors import CannotOverwriteExistingCassetteException
+from . import compat
 
 
 def parse_headers_backwards_compat(header_dict):
@@ -26,48 +27,10 @@ def parse_headers_backwards_compat(header_dict):
 
 
 def parse_headers(header_list):
-    if six.PY3:
-        try:
-            return http.client.parse_headers(
-                BytesIO(
-                    b'\n'.join(
-                        [b': '.join((k.encode('utf-8'), v.encode('utf-8')))
-                         for k, v in header_list])
-                    + b'\r\n'))
-        except ValueError:
-            return http.client.parse_headers(
-                BytesIO(b'\n'.join([header.encode('utf-8')
-                                    for header in header_list])))
-
     if isinstance(header_list, dict):
         return parse_headers_backwards_compat(header_list)
-    headers = "".join(header_list) + "\r\n"
-    msg = HTTPMessage(BytesIO(headers))
-    msg.fp.seek(0)
-    msg.readheaders()
-    return msg
-
-
-def get_header(message, name):
-    if six.PY3:
-        return message.getallmatchingheaders(name)
-    else:
-        return message.getheader(name)
-
-
-def get_header_items(message):
-    if six.PY3:
-        return dict(message._headers).items()
-    else:
-        return message.dict.items()
-
-
-def get_headers(response):
-    if six.PY3:
-        return response.msg._headers
-    else:
-        return response.msg.headers
-
+    headers = b"".join(header_list) + b"\r\n"
+    return compat.get_httpmessage(headers)
 
 class VCRHTTPResponse(object):
     """
@@ -84,7 +47,7 @@ class VCRHTTPResponse(object):
         headers = self.recorded_response['headers']
         self.msg = parse_headers(headers)
 
-        self.length = get_header(self.msg, 'content-length') or None
+        self.length = compat.get_header(self.msg, 'content-length') or None
 
     def read(self, *args, **kwargs):
         # Note: I'm pretty much ignoring any chunking stuff because
@@ -111,7 +74,7 @@ class VCRHTTPResponse(object):
 
     def getheaders(self):
         message = parse_headers(self.recorded_response['headers'])
-        return get_header_items(message)
+        return compat.get_header_items(message)
 
 
 class VCRConnectionMixin:
@@ -245,10 +208,10 @@ class VCRConnectionMixin:
             # Otherwise, we should send the request, then get the response
             # and return it.
 
-           # restore sock's value to None, since we need a real socket
+            # restore sock's value to None, since we need a real socket
             self._restore_socket()
 
-            #make the actual request
+            # make the actual request
             self._baseclass.request(
                 self,
                 method=self._vcr_request.method,
@@ -266,7 +229,7 @@ class VCRConnectionMixin:
                     'code': response.status,
                     'message': response.reason
                 },
-                'headers': get_headers(response),
+                'headers': compat.get_headers(response),
                 'body': {'string': response.read()},
             }
             self.cassette.append(self._vcr_request, response)
