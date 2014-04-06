@@ -9,7 +9,7 @@ class VCR(object):
                  serializer='yaml',
                  cassette_library_dir=None,
                  record_mode="once",
-                 match_on=['url', 'method'],
+                 match_on=['method', 'host', 'port', 'path', 'query'],
                  ):
         self.serializer = serializer
         self.match_on = match_on
@@ -22,7 +22,9 @@ class VCR(object):
             'method': method,
             'url': url,
             'host': host,
+            'port': method,
             'path': path,
+            'query': path,
             'headers': headers,
             'body': body,
         }
