@@ -1,7 +1,7 @@
 import os
 from .cassette import Cassette
 from .serializers import yamlserializer, jsonserializer
-from .matchers import method, url, host, path, headers, body
+from . import matchers
 
 
 class VCR(object):
@@ -9,7 +9,14 @@ class VCR(object):
                  serializer='yaml',
                  cassette_library_dir=None,
                  record_mode="once",
-                 match_on=['method', 'host', 'port', 'path', 'query'],
+                 match_on=[
+                     'method',
+                     'scheme',
+                     'host',
+                     'port',
+                     'path',
+                     'query',
+                 ],
                  ):
         self.serializer = serializer
         self.match_on = match_on
@@ -19,14 +26,15 @@ class VCR(object):
             'json': jsonserializer,
         }
         self.matchers = {
-            'method': method,
-            'url': url,
-            'host': host,
-            'port': method,
-            'path': path,
-            'query': path,
-            'headers': headers,
-            'body': body,
+            'method': matchers.method,
+            'url': matchers.url,
+            'scheme': matchers.scheme,
+            'host': matchers.host,
+            'port': matchers.method,
+            'path': matchers.path,
+            'query': matchers.path,
+            'headers': matchers.headers,
+            'body': matchers.body,
         }
         self.record_mode = record_mode
 
