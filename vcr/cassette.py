@@ -12,7 +12,7 @@ from contextdecorator import ContextDecorator
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
 from .serializers import yamlserializer
-from .matchers import requests_match, url, method
+from .matchers import requests_match, uri, method
 from .errors import UnhandledHTTPRequestError
 
 
@@ -30,7 +30,7 @@ class Cassette(ContextDecorator):
                  path,
                  serializer=yamlserializer,
                  record_mode='once',
-                 match_on=[url, method]):
+                 match_on=[uri, method]):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
