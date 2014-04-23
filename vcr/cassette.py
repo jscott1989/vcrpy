@@ -11,6 +11,7 @@ from contextdecorator import ContextDecorator
 # Internal imports
 from .patch import install, reset
 from .persist import load_cassette, save_cassette
+from .filters import filter_request
 from .serializers import yamlserializer
 from .matchers import requests_match, url, method
 from .errors import UnhandledHTTPRequestError
@@ -30,10 +31,14 @@ class Cassette(ContextDecorator):
                  path,
                  serializer=yamlserializer,
                  record_mode='once',
-                 match_on=[url, method]):
+                 match_on=[url, method],
+                 filter_headers=[],
+                 filter_query_parameters=[]):
         self._path = path
         self._serializer = serializer
         self._match_on = match_on
+        self._filter_headers = filter_headers
+        self._filter_query_parameters = filter_query_parameters
 
         # self.data is the list of (req, resp) tuples
         self.data = []
@@ -61,6 +66,7 @@ class Cassette(ContextDecorator):
 
     def append(self, request, response):
         '''Add a request, response pair to this cassette'''
+        request = filter_request(request, self._filter_headers, self._filter_query_parameters)
         self.data.append((request, response))
         self.dirty = True
 

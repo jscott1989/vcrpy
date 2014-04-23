@@ -10,6 +10,8 @@ class VCR(object):
                  cassette_library_dir=None,
                  record_mode="once",
                  match_on=['url', 'method'],
+                 filter_headers=[],
+                 filter_query_parameters=[],
                  ):
         self.serializer = serializer
         self.match_on = match_on
@@ -27,6 +29,8 @@ class VCR(object):
             'body': body,
         }
         self.record_mode = record_mode
+        self.filter_headers = []
+        self.filter_query_parameters = []
 
     def _get_serializer(self, serializer_name):
         try:
@@ -65,6 +69,8 @@ class VCR(object):
             "serializer": self._get_serializer(serializer_name),
             "match_on": self._get_matchers(matcher_names),
             "record_mode": kwargs.get('record_mode', self.record_mode),
+            "filter_headers": kwargs.get('filter_headers', self.filter_headers),
+            "filter_query_parameters": kwargs.get('filter_query_parameters', self.filter_query_parameters),
         }
 
         return Cassette.load(path, **merged_config)
